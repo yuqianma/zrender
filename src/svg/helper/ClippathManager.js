@@ -93,7 +93,7 @@ ClippathManager.prototype.updateDom = function (
         // Build path and add to <clipPath>
         var svgProxy = this.getSvgProxy(clipPath);
         if (clipPath.transform
-            && clipPath.parent.invTransform
+            && clipPath.parentNode.invTransform
             && !isText
         ) {
             /**
@@ -111,7 +111,7 @@ ClippathManager.prototype.updateDom = function (
             // Transform back from parent, and brush path
             matrix.mul(
                 clipPath.transform,
-                clipPath.parent.invTransform,
+                clipPath.parentNode.invTransform,
                 clipPath.transform
             );
             svgProxy.brush(clipPath);

@@ -65,16 +65,16 @@ IncrementalDisplayble.prototype.update = function () {
     for (var i = this._cursor; i < this._displayables.length; i++) {
         var displayable = this._displayables[i];
         // PENDING
-        displayable.parent = this;
+        displayable.parentNode = this;
         displayable.update();
-        displayable.parent = null;
+        displayable.parentNode = null;
     }
     for (var i = 0; i < this._temporaryDisplayables.length; i++) {
         var displayable = this._temporaryDisplayables[i];
         // PENDING
-        displayable.parent = this;
+        displayable.parentNode = this;
         displayable.update();
-        displayable.parent = null;
+        displayable.parentNode = null;
     }
 };
 

@@ -116,7 +116,7 @@ Storage.prototype = {
             // Recursively add clip path
             while (currentClipPath) {
                 // clipPath 的变换是基于使用这个 clipPath 的元素
-                currentClipPath.parent = parentClipPath;
+                currentClipPath.parentNode = parentClipPath;
                 currentClipPath.updateTransform();
 
                 clipPaths.push(currentClipPath);

@@ -71,7 +71,7 @@ transformableProto.needLocalTransform = function () {
 
 var scaleTmp = [];
 transformableProto.updateTransform = function () {
-    var parent = this.parent;
+    var parent = this.parentNode;
     var parentHasTransform = parent && parent.transform;
     var needLocalTransform = this.needLocalTransform();
 
@@ -182,7 +182,7 @@ transformableProto.decomposeTransform = function () {
     if (!this.transform) {
         return;
     }
-    var parent = this.parent;
+    var parent = this.parentNode;
     var m = this.transform;
     if (parent && parent.transform) {
         // Get local transform and decompose them to position, scale, rotation

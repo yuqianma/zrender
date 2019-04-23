@@ -238,7 +238,7 @@ Handler.prototype = {
 
             el.trigger(eventName, eventPacket);
 
-            el = el.parent;
+            el = el.parentNode;
 
             if (eventPacket.cancelBubble) {
                 break;
@@ -366,7 +366,7 @@ function isHover(displayable, x, y) {
             if (el.silent) {
                 isSilent = true;
             }
-            el = el.parent;
+            el = el.parentNode;
         }
         return isSilent ? SILENT : true;
     }

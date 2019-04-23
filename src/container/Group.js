@@ -107,7 +107,7 @@ Group.prototype = {
      * @param {module:zrender/Element} child
      */
     add: function (child) {
-        if (child && child !== this && child.parent !== this) {
+        if (child && child !== this && child.parentNode !== this) {
 
             this._children.push(child);
 
@@ -123,8 +123,8 @@ Group.prototype = {
      * @param {module:zrender/Element} nextSibling
      */
     addBefore: function (child, nextSibling) {
-        if (child && child !== this && child.parent !== this
-            && nextSibling && nextSibling.parent === this) {
+        if (child && child !== this && child.parentNode !== this
+            && nextSibling && nextSibling.parentNode === this) {
 
             var children = this._children;
             var idx = children.indexOf(nextSibling);
@@ -139,11 +139,11 @@ Group.prototype = {
     },
 
     _doAdd: function (child) {
-        if (child.parent) {
-            child.parent.remove(child);
+        if (child.parentNode) {
+            child.parentNode.remove(child);
         }
 
-        child.parent = this;
+        child.parentNode = this;
 
         var storage = this.__storage;
         var zr = this.__zr;
@@ -174,7 +174,7 @@ Group.prototype = {
         }
         children.splice(idx, 1);
 
-        child.parent = null;
+        child.parentNode = null;
 
         if (storage) {
 
@@ -206,7 +206,7 @@ Group.prototype = {
                     child.delChildrenFromStorage(storage);
                 }
             }
-            child.parent = null;
+            child.parentNode = null;
         }
         children.length = 0;
 

@@ -2,13 +2,18 @@ requireES([
     'src/zrender.js',
     'src/graphic/IncrementalDisplayable',
     'src/graphic/shape/Circle',
+    'src/container/Group'
 ], function(
     zrender,
     IncrementalDisplayable,
     Circle,
+    Group,
 ) {
     var zr = zrender.init(document.getElementById('main'));
     window.zr = zr;
+
+    var group = new Group();
+    zr.add(group);
 
     var w = zr.getWidth(), h = zr.getHeight();
 
@@ -25,7 +30,7 @@ requireES([
                 },
                 incremental: true,
             });
-            zr.add(circleShape);
+            group.add(circleShape);
         }
     };
 
