@@ -31,7 +31,7 @@ IncrementalDisplayble.prototype.clearDisplaybles = function () {
     this._cursor = 0;
     this.dirty();
 
-    this.notClear = false;
+    this.notClear = true;
 };
 
 IncrementalDisplayble.prototype.addDisplayable = function (displayable, notPersistent) {
@@ -103,16 +103,25 @@ IncrementalDisplayble.prototype.brush = function (ctx, prevEl) {
 var m = [];
 IncrementalDisplayble.prototype.getBoundingRect = function () {
     if (!this._rect) {
-        var rect = new BoundingRect(Infinity, Infinity, -Infinity, -Infinity);
-        for (var i = 0; i < this._displayables.length; i++) {
-            var displayable = this._displayables[i];
-            var childRect = displayable.getBoundingRect().clone();
-            if (displayable.needLocalTransform()) {
-                childRect.applyTransform(displayable.getLocalTransform(m));
+        var len = this._displayables.length;
+        if (len === 0) {
+            this._rect = new BoundingRect(0, 0, 0, 0);
+        } else if (len > 0) {
+            var firstDisplayable = this._displayables[0];
+            var tmpRect = firstDisplayable.getBoundingRect().clone();
+            if (firstDisplayable.needLocalTransform()) {
+                tmpRect.applyTransform(firstDisplayable.getLocalTransform(m));
             }
-            rect.union(childRect);
+            for (var i = 1; i < len; i++) {
+                var displayable = this._displayables[i];
+                var childRect = displayable.getBoundingRect().clone();
+                if (displayable.needLocalTransform()) {
+                    childRect.applyTransform(displayable.getLocalTransform(m));
+                }
+                tmpRect.union(childRect);
+            }
+            this._rect = tmpRect;
         }
-        this._rect = rect;
     }
     return this._rect;
 };
