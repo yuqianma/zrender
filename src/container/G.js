@@ -126,10 +126,12 @@ G.prototype = {
             child.parentNode && child.parentNode.removeChild(child);
 
             childNodes.push(child);
+            child.parentNode = this;
 
             lastChild && (lastChild.nextSibling = child);
         }
         // TODO, add
+
 
         return child;
     },
@@ -179,6 +181,7 @@ G.prototype = {
                 childNodes[refIdx - 1].nextSibling = child;
             }
             childNodes.splice(refIdx, 0, child);
+            child.parentNode = this;
             child.nextSibling = referenceNode;
         }
         // TODO, add
