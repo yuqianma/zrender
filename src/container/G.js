@@ -195,7 +195,7 @@ G.prototype = {
      * @returns {module:zrender/Element|undefined}
      */
     removeChild: function (child) {
-        if (child.parentNode !== this) {
+        if (!child || child.parentNode !== this) {
             return;
         }
 
