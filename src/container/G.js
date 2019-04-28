@@ -1,6 +1,7 @@
 import * as zrUtil  from '../core/util';
 import BoundingRect from '../core/BoundingRect';
-import Displayble   from '../graphic/Displayable';
+import Displayable  from '../graphic/Displayable';
+import Rect         from '../graphic/shape/Rect';
 
 /**
  * @alias module:zrender/graphic/G
@@ -12,13 +13,26 @@ var G = function (opts) {
 
     opts = opts || {};
 
-    Displayble.call(this, opts);
+    // TODO Jeffrey: Displayable or Element
+    Displayable.call(this, opts);
 
-    for (var key in opts) {
-        if (opts.hasOwnProperty(key)) {
-            this[key] = opts[key];
-        }
-    }
+    // TODO Jeffrey: animation?
+    // TODO Jeffrey: optimize no background
+    this._background = new Rect({
+        shape: {
+            width: opts.width,
+            height: opts.height
+        },
+        style: {
+            fill: opts.backgroundColor,
+            stroke: opts.borderColor,
+            lineWidth: opts.borderWidth
+        },
+    });
+
+    this._background.parentNode = this;
+
+    this._renderList = [];
 
     this.childNodes = [];
 
@@ -41,58 +55,6 @@ G.prototype = {
      * @default false
      */
     silent: false,
-
-    // /**
-    //  * @return {Array.<module:zrender/Element>}
-    //  */
-    // children: function () {
-    //     return this.childNodes.slice();
-    // },
-    //
-    // /**
-    //  * 获取指定 index 的儿子节点
-    //  * @param  {number} idx
-    //  * @return {module:zrender/Element}
-    //  */
-    // childAt: function (idx) {
-    //     return this.childNodes[idx];
-    // },
-    //
-    // /**
-    //  * 获取指定名字的儿子节点
-    //  * @param  {string} name
-    //  * @return {module:zrender/Element}
-    //  */
-    // childOfName: function (name) {
-    //     var children = this.childNodes;
-    //     for (var i = 0; i < children.length; i++) {
-    //         if (children[i].name === name) {
-    //             return children[i];
-    //         }
-    //     }
-    // },
-    //
-    // /**
-    //  * @return {number}
-    //  */
-    // childCount: function () {
-    //     return this.childNodes.length;
-    // },
-    //
-    // /**
-    //  * 添加子节点到最后
-    //  * @param {module:zrender/Element} child
-    //  */
-    // add: function (child) {
-    //     if (child && child !== this && child.parentNode !== this) {
-    //
-    //         this.childNodes.push(child);
-    //
-    //         this._doAdd(child);
-    //     }
-    //
-    //     return this;
-    // },
 
     /**
      * 添加子节点到最后
@@ -130,8 +92,6 @@ G.prototype = {
 
             lastChild && (lastChild.nextSibling = child);
         }
-        // TODO, add
-
 
         return child;
     },
@@ -184,7 +144,6 @@ G.prototype = {
             child.parentNode = this;
             child.nextSibling = referenceNode;
         }
-        // TODO, add
 
         return child;
     },
@@ -222,16 +181,43 @@ G.prototype = {
         return child;
     },
 
-    update: function () {
+    updateChildNodes: function () {
         this.updateTransform();
-        for (var i = 0; i < this.childNodes.length; ++i) {
-            this.childNodes[i].update();
+        var childNodes = this.childNodes;
+        var renderListLen = 0;
+        for (var i = 0; i < childNodes.length; ++i) {
+            var node = childNodes[i];
+            node.update();
+            if (!node.ignore) {
+                this._renderList.push(childNodes[i]);
+                ++renderListLen;
+            }
         }
+
+        this._renderList.length = renderListLen;
+
+        this._renderList.sort(function (a, b) {
+            if (a.zlevel === b.zlevel) {
+                return a.z - b.z;
+            }
+            return a.zlevel - b.zlevel;
+        });
     },
 
+    update: function () {
+        this.updateChildNodes();
+        this._background.update();
+    },
+
+    // TODO Jeffrey: zlevel
+    // TODO Jeffrey: painter prevEl
     brush: function (ctx, prevEl) {
-        for (var i = 0; i < this.childNodes.length; ++i) {
-            var node = this.childNodes[i];
+        this._background.brush(ctx, prevEl);
+        prevEl = this._background;
+        var renderList = this._renderList;
+
+        for (var i = 0; i < renderList.length; ++i) {
+            var node = renderList[i];
             node.beforeBrush && node.beforeBrush(ctx);
             node.brush(ctx, prevEl);
             node.afterBrush && node.afterBrush(ctx);
@@ -239,199 +225,64 @@ G.prototype = {
         }
     },
 
-    // /**
-    //  * 添加子节点在 nextSibling 之前
-    //  * @param {module:zrender/Element} child
-    //  * @param {module:zrender/Element} nextSibling
-    //  */
-    // addBefore: function (child, nextSibling) {
-    //     if (child && child !== this && child.parentNode !== this
-    //         && nextSibling && nextSibling.parentNode === this) {
-    //
-    //         var children = this.childNodes;
-    //         var idx = children.indexOf(nextSibling);
-    //
-    //         if (idx >= 0) {
-    //             children.splice(idx, 0, child);
-    //             this._doAdd(child);
-    //         }
-    //     }
-    //
-    //     return this;
-    // },
-
-    // _doAdd: function (child) {
-    //     if (child.parentNode) {
-    //         child.parentNode.remove(child);
-    //     }
-    //
-    //     child.parentNode = this;
-    //
-    //     var storage = this.__storage;
-    //     var zr = this.__zr;
-    //     if (storage && storage !== child.__storage) {
-    //
-    //         storage.addToStorage(child);
-    //
-    //         if (child instanceof Group) {
-    //             child.addChildrenToStorage(storage);
-    //         }
-    //     }
-    //
-    //     zr && zr.refresh();
-    // },
-
-    // /**
-    //  * 移除子节点
-    //  * @param {module:zrender/Element} child
-    //  */
-    // remove: function (child) {
-    //     var zr = this.__zr;
-    //     var storage = this.__storage;
-    //     var children = this.childNodes;
-    //
-    //     var idx = zrUtil.indexOf(children, child);
-    //     if (idx < 0) {
-    //         return this;
-    //     }
-    //     children.splice(idx, 1);
-    //
-    //     child.parentNode = null;
-    //
-    //     if (storage) {
-    //
-    //         storage.delFromStorage(child);
-    //
-    //         if (child instanceof Group) {
-    //             child.delChildrenFromStorage(storage);
-    //         }
-    //     }
-    //
-    //     zr && zr.refresh();
-    //
-    //     return this;
-    // },
-    //
-    // /**
-    //  * 移除所有子节点
-    //  */
-    // removeAll: function () {
-    //     var children = this.childNodes;
-    //     var storage = this.__storage;
-    //     var child;
-    //     var i;
-    //     for (i = 0; i < children.length; i++) {
-    //         child = children[i];
-    //         if (storage) {
-    //             storage.delFromStorage(child);
-    //             if (child instanceof Group) {
-    //                 child.delChildrenFromStorage(storage);
-    //             }
-    //         }
-    //         child.parentNode = null;
-    //     }
-    //     children.length = 0;
-    //
-    //     return this;
-    // },
-    //
-    // /**
-    //  * 遍历所有子节点
-    //  * @param  {Function} cb
-    //  * @param  {}   context
-    //  */
-    // eachChild: function (cb, context) {
-    //     var children = this.childNodes;
-    //     for (var i = 0; i < children.length; i++) {
-    //         var child = children[i];
-    //         cb.call(context, child, i);
-    //     }
-    //     return this;
-    // },
-    //
-    // /**
-    //  * 深度优先遍历所有子孙节点
-    //  * @param  {Function} cb
-    //  * @param  {}   context
-    //  */
-    // traverse: function (cb, context) {
-    //     for (var i = 0; i < this.childNodes.length; i++) {
-    //         var child = this.childNodes[i];
-    //         cb.call(context, child);
-    //
-    //         if (child.type === 'group') {
-    //             child.traverse(cb, context);
-    //         }
-    //     }
-    //     return this;
-    // },
-    //
-    // addChildrenToStorage: function (storage) {
-    //     for (var i = 0; i < this.childNodes.length; i++) {
-    //         var child = this.childNodes[i];
-    //         storage.addToStorage(child);
-    //         if (child instanceof Group) {
-    //             child.addChildrenToStorage(storage);
-    //         }
-    //     }
-    // },
-    //
-    // delChildrenFromStorage: function (storage) {
-    //     for (var i = 0; i < this.childNodes.length; i++) {
-    //         var child = this.childNodes[i];
-    //         storage.delFromStorage(child);
-    //         if (child instanceof Group) {
-    //             child.delChildrenFromStorage(storage);
-    //         }
-    //     }
-    // },
-
-    dirty: function () {
-        this.__dirty = true;
-        this.__zr && this.__zr.refresh();
-        return this;
-    },
-
     /**
      * @return {module:zrender/core/BoundingRect}
      */
-    getBoundingRect: function (includeChildren) {
-        // TODO Caching
-        var rect = null;
-        var tmpRect = new BoundingRect(0, 0, 0, 0);
-        var children = includeChildren || this.childNodes;
-        var tmpMat = [];
+    getBoundingRect: function () {
+        if (!this._rect) {
+            var rect = null;
+            var tmpRect = new BoundingRect(0, 0, 0, 0);
+            var children = this._renderList;
+            var tmpMat = [];
 
-        for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            if (child.ignore || child.invisible) {
-                continue;
-            }
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                if (child.ignore) {
+                    continue;
+                }
 
-            var childRect = child.getBoundingRect();
-            var transform = child.getLocalTransform(tmpMat);
-            // TODO
-            // The boundingRect cacluated by transforming original
-            // rect may be bigger than the actual bundingRect when rotation
-            // is used. (Consider a circle rotated aginst its center, where
-            // the actual boundingRect should be the same as that not be
-            // rotated.) But we can not find better approach to calculate
-            // actual boundingRect yet, considering performance.
-            if (transform) {
-                tmpRect.copy(childRect);
-                tmpRect.applyTransform(transform);
-                rect = rect || tmpRect.clone();
-                rect.union(tmpRect);
+                var childRect = child.getBoundingRect();
+                var transform = child.getLocalTransform(tmpMat);
+                // TODO
+                // The boundingRect cacluated by transforming original
+                // rect may be bigger than the actual bundingRect when rotation
+                // is used. (Consider a circle rotated aginst its center, where
+                // the actual boundingRect should be the same as that not be
+                // rotated.) But we can not find better approach to calculate
+                // actual boundingRect yet, considering performance.
+                if (transform) {
+                    tmpRect.copy(childRect);
+                    tmpRect.applyTransform(transform);
+                    rect = rect || tmpRect.clone();
+                    rect.union(tmpRect);
+                }
+                else {
+                    rect = rect || childRect.clone();
+                    rect.union(childRect);
+                }
             }
-            else {
-                rect = rect || childRect.clone();
-                rect.union(childRect);
+            this._rect = rect || tmpRect;
+        }
+
+        return this._rect;
+    },
+
+    contain: function (x, y) {
+        var localPos = this.transformCoordToLocal(x, y);
+        var rect = this.getBoundingRect();
+
+        if (rect.contain(localPos[0], localPos[1])) {
+            for (var i = 0; i < this._renderList.length; i++) {
+                var displayable = this._renderList[i];
+                if (displayable.contain(x, y)) {
+                    return true;
+                }
             }
         }
-        return rect || tmpRect;
+        return false;
     }
 };
 
-zrUtil.inherits(G, Displayble);
+zrUtil.inherits(G, Displayable);
 
 export default G;

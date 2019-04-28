@@ -212,6 +212,11 @@ Displayable.prototype = {
 
         this._rect = null;
 
+        // TODO Jeffrey: for bounding rect, may impact performance
+        if (this.parentNode) {
+            this.parentNode.dirty();
+        }
+
         this.__zr && this.__zr.refresh();
     },
 
