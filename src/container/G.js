@@ -49,12 +49,11 @@ G.prototype = {
      */
     type: 'g',
 
-    /**
-     * 所有子孙元素是否响应鼠标事件
-     * @type {boolean}
-     * @default false
-     */
-    silent: false,
+    backgroundColor: null,
+
+    borderColor: null,
+
+    borderWidth: 0,
 
     /**
      * 添加子节点到最后
@@ -181,13 +180,13 @@ G.prototype = {
         return child;
     },
 
-    updateChildNodes: function () {
+    updateChildNodes: function (updateChild) {
         this.updateTransform();
         var childNodes = this.childNodes;
         var renderListLen = 0;
         for (var i = 0; i < childNodes.length; ++i) {
             var node = childNodes[i];
-            node.update();
+            updateChild && node.update();
             if (!node.ignore) {
                 this._renderList.push(childNodes[i]);
                 ++renderListLen;
@@ -196,6 +195,7 @@ G.prototype = {
 
         this._renderList.length = renderListLen;
 
+        // TODO Jeffrey: no zlevel
         this._renderList.sort(function (a, b) {
             if (a.zlevel === b.zlevel) {
                 return a.z - b.z;
@@ -205,7 +205,10 @@ G.prototype = {
     },
 
     update: function () {
-        this.updateChildNodes();
+        this.updateChildNodes(true);
+        if (this.borderColor) {
+
+        }
         this._background.update();
     },
 
@@ -269,6 +272,7 @@ G.prototype = {
 
     contain: function (x, y) {
         var localPos = this.transformCoordToLocal(x, y);
+        // TODO Jeffrey: background
         var rect = this.getBoundingRect();
 
         if (rect.contain(localPos[0], localPos[1])) {

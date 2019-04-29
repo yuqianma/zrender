@@ -15,14 +15,51 @@ Layout.prototype = {
     type: 'layout',
 
     update: function () {
-        G.prototype.updateChildNodes.call(this);
+        this.updateChildNodes();
 
-        // calculate this._rect
-        // TODO Jeffrey: 可以少遍历一遍
-        var rect = this.getBoundingRect();
-        // this._background.position = [rect.x, rect.y];
-        // this._background.shape.width = rect.width;
-        // this._background.shape.height = rect.height;
+        var width = this.width,
+            height = this.height;
+
+        var left = 0, top = 0;
+
+        // TODO Jeffrey: 还有border，真是深坑啊告退告退……
+        if (this.padding) {
+            var padding = zrUtil.normalizeCssArray(this.padding);
+            width -= padding[3];
+            width -= padding[1];
+            width = Math.max(0, width);
+            // height -= padding[0];
+            // height -= padding[2];
+            // height = Math.max(0, height);
+            left = padding[3];
+            top = padding[0];
+        }
+
+        var x = left, y = top, lineHeight = 0;
+
+        var renderList = this._renderList;
+        for (var i = 0; i < renderList.length; ++i) {
+            var node = renderList[i];
+            var rect = node.getBoundingRect();
+            var rectWidth = rect.width;
+            var rectHeight = rect.height;
+
+            var margin = zrUtil.normalizeCssArray(node.margin || 0);
+
+            rectWidth += margin[1];
+            rectHeight += margin[2];
+
+            if (x + margin[3] + rectWidth > width) {
+                x = left;
+                y = y + lineHeight;
+                lineHeight = 0;
+            }
+            node.position = [x + margin[3], y + margin[0]];
+            node.update();
+            x = x + margin[3] + rectWidth;
+            lineHeight = Math.max(lineHeight, rectHeight);
+        }
+
         this._background.update();
     },
 };
